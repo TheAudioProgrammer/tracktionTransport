@@ -12,13 +12,12 @@
 MainComponent::MainComponent()
 {
     playButton.setToggleState(false, NotificationType::dontSendNotification);
+    playButton.setColour(TextButton::ColourIds::buttonColourId, Colours::red);
+    playButton.setColour(TextButton::ColourIds::buttonOnColourId, Colours::limegreen);
     playButton.onClick = [this]() { play(); };
+    playButton.addListener(this);
     addAndMakeVisible(playButton);
-    
-    stopButton.setToggleState(true, NotificationType::dontSendNotification);
-    stopButton.onClick = [this]() { stop(); };
-    addAndMakeVisible(stopButton);
-    
+
     setSize (200, 200);
     setAudioChannels (2, 2);
 }
@@ -34,6 +33,8 @@ void MainComponent::play()
     if (playState == PlayState::Stop)
     {
         playState = PlayState::Play;
+        playButton.setToggleState(true, NotificationType::dontSendNotification);
+        playButton.setButtonText("Playing");
         edit.getTransport().play(false);
         Timer::startTimer (100);
     }
@@ -45,13 +46,32 @@ void MainComponent::stop()
     {
         playState = PlayState::Stop;
         edit.getTransport().stop(true, false);
+        playButton.setToggleState(false, NotificationType::dontSendNotification);
+        playButton.setButtonText("Stopped");
         Timer::stopTimer();
     }
 }
 
 void MainComponent::timerCallback()
 {
-    DBG("Time: " << edit.getTransport().getCurrentPosition());
+    timeUI = static_cast<String>(edit.getTransport().getCurrentPosition());
+    //DBG("Time: " << edit.getTransport().getCurrentPosition());
+    repaint();
+}
+
+void MainComponent::buttonClicked (Button* button)
+{
+   if (button == &playButton)
+   {
+       if (playState == PlayState::Play)
+       {
+           playButton.onClick = [&]() { stop(); };
+       }
+       else
+       {
+           playButton.onClick = [&]() { play(); };
+       }
+   }
 }
 
 //==============================================================================
@@ -82,21 +102,20 @@ void MainComponent::releaseResources()
 //==============================================================================
 void MainComponent::paint (Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
-
-    // You can add your drawing code here!
+    Rectangle<int> timeUIBounds { 50, 10, 100, 20 };
+    
+    g.fillAll(Colours::black);
+    g.setFont(15.0f);
+    g.setColour(Colours::white);
+    g.drawText(timeUI, timeUIBounds, Justification::centred);
 }
 
 void MainComponent::resized()
 {
     Rectangle<int> bounds = getLocalBounds();
     
-    FlexBox flexbox { FlexBox::Direction::row, FlexBox::Wrap::noWrap, FlexBox::AlignContent::stretch, FlexBox::AlignItems::stretch, FlexBox::JustifyContent::center };
+    FlexBox flexbox { FlexBox::Direction::row, FlexBox::Wrap::noWrap, FlexBox::AlignContent::center, FlexBox::AlignItems::center, FlexBox::JustifyContent::center };
     
     flexbox.items.add(FlexItem(100, 100, playButton));
-    flexbox.items.add(FlexItem(100, 100, stopButton));
-    
     flexbox.performLayout(bounds);
-    
 }

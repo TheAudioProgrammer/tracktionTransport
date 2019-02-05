@@ -16,7 +16,8 @@
     your controls and content.
 */
 class MainComponent   : public AudioAppComponent,
-                        public Timer
+                        public Timer,
+                        public Button::Listener
 {
 public:
     //==============================================================================
@@ -35,6 +36,7 @@ public:
     void play();
     void stop();
     void timerCallback() override;
+    void buttonClicked (Button* button) override;
 
 private:
     tracktion_engine::Engine engine { ProjectInfo::projectName };
@@ -46,9 +48,9 @@ private:
         Stop
     };
     
+    String timeUI { "" };
     PlayState playState { PlayState::Stop };
-    TextButton playButton { "Play" };
-    TextButton stopButton { "Stop" };
+    TextButton playButton { "Stopped" };
     
     //==============================================================================
     // Your private member variables go here...
